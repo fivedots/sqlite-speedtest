@@ -1,7 +1,7 @@
 # Emscripten
 
-EMCC_PATH = /usr/local/google/home/krivoy/fugu/emdev/emscripten/emcc
-EMRUN_PATH = /usr/local/google/home/krivoy/fugu/emdev/emscripten/emrun
+EMCC_PATH = /home/krivoy/fugu/emdev/emscripten/emcc
+EMRUN_PATH = /home/krivoy/fugu/emdev/emscripten/emrun
 
 # dependencies
 

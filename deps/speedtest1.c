@@ -42,9 +42,6 @@ static const char zHelp[] =
 ;
 
 
-//!!! TODO remove
-#include <emscripten.h>
-
 #include "sqlite3.h"
 #include <assert.h>
 #include <stdio.h>
@@ -370,9 +367,6 @@ void speedtest1_exec(const char *zFormat, ...){
     char *zErrMsg = 0;
     int rc = sqlite3_exec(g.db, zSql, 0, 0, &zErrMsg);
 
-    if(rc != SQLITE_OK) {
-      EM_ASM({console.log('speedtest1_exec erro rc:', $0)}, rc);
-    }
     if( zErrMsg ) fatal_error("SQL error: %s\n%s\n", zErrMsg, zSql);
     if( rc!=SQLITE_OK ) fatal_error("exec error: %s\n", sqlite3_errmsg(g.db));
   }
@@ -394,7 +388,6 @@ void speedtest1_prepare(const char *zFormat, ...){
     if( g.pStmt ) sqlite3_finalize(g.pStmt);
     rc = sqlite3_prepare_v2(g.db, zSql, -1, &g.pStmt, 0);
     if( rc ){
-      EM_ASM({console.log('speedtest1_prepare erro rc:', $0)}, rc);
       fatal_error("SQL error: %s\n", sqlite3_errmsg(g.db));
     }
   }
@@ -2008,7 +2001,6 @@ int main(int argc, char **argv){
   int i;                        /* Loop counter */
   int rc;                       /* API return code */
 
-  EM_ASM({var entries = io.listByPrefix('');console.log('test start io entries:', entries)});
   /* Display the version of SQLite being tested */
   printf("-- Speedtest1 for SQLite %s %.50s\n",
          sqlite3_libversion(), sqlite3_sourceid());
