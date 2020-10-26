@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>NativeIO Benchmarking</title>
+    <style>
+      body {
+        font-family: arial;
+        margin: 0;
+        padding: none;
+      }
+
+      input {
+          margin: .4rem;
+      }
+
+      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+      div.emscripten { text-align: center; }      
+      div.emscripten_border { border: 1px solid black; }
+
+      .spinner {
+        height: 30px;
+        width: 30px;
+        margin: 0;
+        margin-top: 20px;
+        margin-left: 20px;
+        display: inline-block;
+        vertical-align: top;
+
+        -webkit-animation: rotation .8s linear infinite;
+        -moz-animation: rotation .8s linear infinite;
+        -o-animation: rotation .8s linear infinite;
+        animation: rotation 0.8s linear infinite;
+
+        border-left: 5px solid rgb(235, 235, 235);
+        border-right: 5px solid rgb(235, 235, 235);
+        border-bottom: 5px solid rgb(235, 235, 235);
+        border-top: 5px solid rgb(120, 120, 120);
+        
+        border-radius: 100%;
+        background-color: rgb(189, 215, 46);
+      }
+      .coolButton {
+        padding: 0.35em 1.2em;
+        border: 0.1em solid #FFFFFF;
+        margin: 0 0.3em 0.3em 0;
+        border-radius: 0.12em;
+        text-align:center;
+        box-sizing: border-box;
+      }
+
+      @-webkit-keyframes rotation {
+        from {-webkit-transform: rotate(0deg);}
+        to {-webkit-transform: rotate(360deg);}
+      }
+      @-moz-keyframes rotation {
+        from {-moz-transform: rotate(0deg);}
+        to {-moz-transform: rotate(360deg);}
+      }
+      @-o-keyframes rotation {
+        from {-o-transform: rotate(0deg);}
+        to {-o-transform: rotate(360deg);}
+      }
+      @keyframes rotation {
+        from {transform: rotate(0deg);}
+        to {transform: rotate(360deg);}
+      }
+
+      #status {
+        display: inline-block;
+        vertical-align: top;
+        margin-top: 30px;
+        margin-left: 20px;
+        font-weight: bold;
+        color: rgb(120, 120, 120);
+      }
+
+      #progress {
+        height: 20px;
+        width: 300px;
+      }
+
+      #controls {
+        display: inline-block;
+        float: right;
+        vertical-align: top;
+        margin-top: 30px;
+        margin-right: 20px;
+      }
+
+      #output {
+        width: 100%;
+        height: 200px;
+        margin: 0 auto;
+        margin-top: 10px;
+        border-left: 0px;
+        border-right: 0px;
+        padding-left: 0px;
+        padding-right: 0px;
+        display: block;
+        background-color: black;
+        color: white;
+        font-family: 'Lucida Console', Monaco, monospace;
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="spinner" id='spinner'></div>
+    <div class="emscripten" id="status">Downloading...</div>
+
+    <h1>Benchmarking SQLite in Wasm with NativeIO</h1>
+
+    <div class="emscripten">
+      <div id="parameters">
+          <label for="testsize">Test Size:</label>
+          <input type="number" min="5" max="100" id="testsize" name="testsize" value="5"><br>
+          <label for="filesystem">Filesystem:</label>
+          <select id="filesystem" name="filesystem">
+            <option value="memfs">MEMFS</option>
+            <option value="nativeiofs">NATIVEIOFS</option>
+            <option value="idbfs">IDBFS</option>
+          </select><br>
+      </div>
+      <button class="coolbutton"
+              onclick="runBenchmark()"
+              type="button">
+        Run Benchmark
+      </button><br>
+    </div>
+
+    <div class="emscripten">
+      <progress value="0" max="100" id="progress" hidden=1></progress>
+    </div>
+
+    
+    <div class="emscripten_border">
+    </div>
+    <textarea id="output" rows="8"></textarea>
+
+    <script type='text/javascript'>
+      var statusElement = document.getElementById('status');
+      var progressElement = document.getElementById('progress');
+      var spinnerElement = document.getElementById('spinner');
+      var outputElement = document.getElementById('output');
+      if (outputElement) outputElement.value = ''; //clear browser cache
+
+      var worker = new Worker('speedtest1.js');
+      worker.onerror = function(err) {
+          console.log(err);
+      };
+      worker.onmessage = function(e) {
+        let data = e.data;
+          switch (data.cmd) {
+              case 'print':
+                  // These replacements are necessary if you render to raw HTML
+                  //text = text.replace(/&/g, "&amp;");
+                  //text = text.replace(/</g, "&lt;");
+                  //text = text.replace(/>/g, "&gt;");
+                  //text = text.replace('\n', '<br>', 'g');
+                  if (outputElement) {
+                      outputElement.value += data.text + "\n";
+                      outputElement.scrollTop = outputElement.scrollHeight; // focus on bottom
+                  }
+                  break;
+              case 'printErr':
+                  if (outputElement) {
+                      outputElement.value += "ERROR: " + data.text + "\n";
+                      outputElement.scrollTop = outputElement.scrollHeight; // focus on bottom
+                  }                  
+                  break;
+              case 'setStatus':
+                  let text = data.text;
+                  if (data.m) {
+                      text = data.m[1];
+                      progressElement.value = parseInt(data.m[2])*100;
+                      progressElement.max = parseInt(data.m[4])*100;
+                      progressElement.hidden = false;
+                      spinnerElement.hidden = false;
+                  } else {
+                      progressElement.value = null;
+                      progressElement.max = null;
+                      progressElement.hidden = true;
+                      if (!text) spinnerElement.style.display = 'none';
+                  }
+                  statusElement.innerHTML = text;
+                  break;
+              default:
+                  console.log('Message with unknown command received', e);
+          }
+      };
+      function runBenchmark() {
+          args = [];
+          let filesystem = document.getElementById("filesystem").value;
+          args.push(`/${filesystem}/speedtest_db`);
+          let size = document.getElementById("testsize").value;
+          args.push("--size");
+          args.push(size);
+          worker.postMessage({
+              'cmd': "runSpeedtest",
+              'args': args,
+              'filesystem': filesystem,
+          });
+      }
+    </script>
+  </body>
+</html>
