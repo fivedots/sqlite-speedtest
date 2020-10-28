@@ -15,6 +15,10 @@
           margin: .4rem;
       }
 
+      h1 {
+          margin: .5em;
+      }
+
       .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
       div.emscripten { text-align: center; }      
       div.emscripten_border { border: 1px solid black; }
@@ -42,12 +46,15 @@
         background-color: rgb(189, 215, 46);
       }
       .coolButton {
-        padding: 0.35em 1.2em;
-        border: 0.1em solid #FFFFFF;
-        margin: 0 0.3em 0.3em 0;
+        padding: 0.5em 1.2em;
+        margin: 0.4em;
         border-radius: 0.12em;
         text-align:center;
         box-sizing: border-box;
+      }
+
+      .footer {
+          text-align: right;
       }
 
       @-webkit-keyframes rotation {
@@ -123,11 +130,12 @@
             <option value="idbfs">IDBFS</option>
           </select><br>
       </div>
-      <button class="coolbutton"
+      <button class="coolButton"
               onclick="runBenchmark()"
               type="button">
         Run Benchmark
-      </button><br>
+      </button>
+      <p>Reload the page between benchmarks to ensure reliable results.</p>
     </div>
 
     <div class="emscripten">
@@ -138,6 +146,7 @@
     <div class="emscripten_border">
     </div>
     <textarea id="output" rows="8"></textarea>
+    <p class="footer">For more information about NativeIO, check out its <a href="https://github.com/fivedots/nativeio-explainer">explainer</a>. This is not an official Google product.</p>
 
     <script type='text/javascript'>
       var statusElement = document.getElementById('status');

@@ -20,7 +20,10 @@ python3 -m http.server 8888
 
 Then open the following link in a Chrome instance with the
 "Experimental Web Platform features" flag enabled:
-[localhost:8888/speedtest1.html](http://localhost:8888/speedtest1.html).
+[localhost:8888/speedtest1.html](http://localhost:8888/speedtest1.html). 
+
+You should reload the page after each run of the benchmark to reset the
+application.
 
 ## Results
 The speedtest can be run using MEMFS, IDBFS and a new file system based on

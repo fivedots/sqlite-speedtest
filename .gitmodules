@@ -1,3 +1,3 @@
 [submodule "nativeio-emscripten-fs"]
 	path = third_party/nativeio-emscripten-fs
-	url = git@github.com:fivedots/nativeio-emscripten-fs.git
+	url = https://github.com/fivedots/nativeio-emscripten-fs.git
