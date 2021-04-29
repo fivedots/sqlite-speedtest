@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>NativeIO Benchmarking</title>
+    <title>Storage Foundation API Benchmarking</title>
     <style>
       body {
         font-family: arial;
@@ -117,7 +117,7 @@
     <div class="spinner" id='spinner'></div>
     <div class="emscripten" id="status">Downloading...</div>
 
-    <h1>Benchmarking SQLite in Wasm with NativeIO</h1>
+    <h1 id="title">Benchmarking SQLite in Wasm with Storage Foundation API</h1>
 
     <div class="emscripten">
       <div id="parameters">
@@ -125,8 +125,8 @@
           <input type="number" min="5" max="100" id="testsize" name="testsize" value="5"><br>
           <label for="filesystem">Filesystem:</label>
           <select id="filesystem" name="filesystem">
+            <option id="storageFoundationOption" value="sfafs">Storage Foundation</option>
             <option value="memfs">MEMFS</option>
-            <option value="nativeiofs">NATIVEIOFS</option>
             <option value="idbfs">IDBFS</option>
           </select><br>
       </div>
@@ -146,72 +146,19 @@
     <div class="emscripten_border">
     </div>
     <textarea id="output" rows="8"></textarea>
-    <p class="footer">For more information about NativeIO, check out its <a href="https://github.com/fivedots/nativeio-explainer">explainer</a>. This is not an official Google product.</p>
+    <button class="coolButton"
+            onclick="getBenchmarkResults()"
+            type="button">
+      Show Storage Foundation performance results
+    </button>
+    <div id="storageFoundationPerformance">
+      <table>
+        <tbody id="performance_tbody"></tbody>
+      </table>
+    </div>
 
-    <script type='text/javascript'>
-      var statusElement = document.getElementById('status');
-      var progressElement = document.getElementById('progress');
-      var spinnerElement = document.getElementById('spinner');
-      var outputElement = document.getElementById('output');
-      if (outputElement) outputElement.value = ''; //clear browser cache
+    <p class="footer">For more information about Storage Foundation, check out its <a href="https://github.com/WICG/storage-foundation-api-explainer">explainer</a>. This is not an official Google product.</p>
 
-      var worker = new Worker('speedtest1.js');
-      worker.onerror = function(err) {
-          console.log(err);
-      };
-      worker.onmessage = function(e) {
-        let data = e.data;
-          switch (data.cmd) {
-              case 'print':
-                  // These replacements are necessary if you render to raw HTML
-                  //text = text.replace(/&/g, "&amp;");
-                  //text = text.replace(/</g, "&lt;");
-                  //text = text.replace(/>/g, "&gt;");
-                  //text = text.replace('\n', '<br>', 'g');
-                  if (outputElement) {
-                      outputElement.value += data.text + "\n";
-                      outputElement.scrollTop = outputElement.scrollHeight; // focus on bottom
-                  }
-                  break;
-              case 'printErr':
-                  if (outputElement) {
-                      outputElement.value += "ERROR: " + data.text + "\n";
-                      outputElement.scrollTop = outputElement.scrollHeight; // focus on bottom
-                  }                  
-                  break;
-              case 'setStatus':
-                  let text = data.text;
-                  if (data.m) {
-                      text = data.m[1];
-                      progressElement.value = parseInt(data.m[2])*100;
-                      progressElement.max = parseInt(data.m[4])*100;
-                      progressElement.hidden = false;
-                      spinnerElement.hidden = false;
-                  } else {
-                      progressElement.value = null;
-                      progressElement.max = null;
-                      progressElement.hidden = true;
-                      if (!text) spinnerElement.style.display = 'none';
-                  }
-                  statusElement.innerHTML = text;
-                  break;
-              default:
-                  console.log('Message with unknown command received', e);
-          }
-      };
-      function runBenchmark() {
-          args = [];
-          let filesystem = document.getElementById("filesystem").value;
-          args.push(`/${filesystem}/speedtest_db`);
-          let size = document.getElementById("testsize").value;
-          args.push("--size");
-          args.push(size);
-          worker.postMessage({
-              'cmd': "runSpeedtest",
-              'args': args,
-              'filesystem': filesystem,
-          });
-      }
-    </script>
+    <script src="shell.js"></script>
   </body>
 </html>
