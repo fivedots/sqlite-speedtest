@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 var Module = {
+  benchmark_results: {},
   noInitialRun: true,
   preRun: [],
   postRun: [],
@@ -39,8 +41,8 @@ var Module = {
     // Matches a string of the form
     // "Sometext(NumRemainingDeps/NumTotalDeps)MoreText", with m[1] as
     // SomeText, m[2] as NumRemainingDeps and m[4] as NumTotalDeps.
-    var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
-    var now = Date.now();
+    let m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+    let now = Date.now();
     if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon.
     Module.setStatus.last.time = now;
     Module.setStatus.last.text = text;
@@ -65,28 +67,39 @@ onmessage = function(e) {
     case 'runSpeedtest':
       runSpeedtest(data);
       break;
+    case 'getBenchmarkResults':
+      getBenchmarkResults();
+      break;
     default:
       console.log('Message with unknown command received', e);
   }
 };
 
+function prepareStorageFoundation() {
+  // Remove old data in Storage Foundation's directory
+  let entries = storageFoundation.getAllSync();
+  for (e of entries) { storageFoundation.deleteSync(e);}
+  console.log('Cleanup: deleted', entries);
+  // Reserve a lot of capacity!
+  storageFoundation.requestCapacitySync(1024*1024*1024);
+}
+
 function runSpeedtest(data) {
   switch (data.filesystem) {
-    case 'nativeiofs':
-      // Remove old data in NativeIO's directory
-      var entries = nativeIO.getAllSync();
-      for (e of entries) { nativeIO.deleteSync(e);}
-      console.log('deleted', entries);
-      FS.mkdir('/nativeiofs');
-      FS.mount(NATIVEIOFS, { root: '.' }, '/nativeiofs');
+    case 'sfafs-sync':
+      prepareStorageFoundation();
+      FS.mkdir('/sfafs-sync');
+      FS.mount(SFAFS, { root: '.' }, '/sfafs-sync');
+      break;
+    case 'sfafs-async':
+      prepareStorageFoundation()
+      FS.mkdir('/sfafs-async');
       break;
     case 'memfs':
-      // No need to remove old data, as it is not persisted accross sessions.
       FS.mkdir('/memfs');
       FS.mount(MEMFS, { root: '.' }, '/memfs');
       break;
     case 'idbfs':
-      // No need to remove old data, as it is not persisted accross sessions.
       FS.mkdir('/idbfs');
       FS.mount(IDBFS, { root: '.' }, '/idbfs');
       break;
@@ -94,5 +107,16 @@ function runSpeedtest(data) {
       Module.printErr('Unknown file system', data.filesystem);
   }
   console.log(`Running speedtest1 under ${data.filesystem}.`);
-  callMain(data.args);
+
+  speedtest_args = data.args;
+  speedtest_args.push('--stats');
+  speedtest_args.push('--singlethread');
+  callMain(speedtest_args);
+}
+
+function getBenchmarkResults() {
+  self.postMessage({
+    'cmd': 'benchmarkResults',
+    'benchmarkResults': Module.benchmark_results,
+  });
 }
