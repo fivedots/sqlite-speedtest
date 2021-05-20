@@ -54,9 +54,11 @@ all: dist/speedtest1-sync.js dist/speedtest1-async.js
 clean:
 	rm -rf dist/*
 
+# TODO: Switch back to MODCC after there is documentation on the async FS or
+# after there is sync specific build paths
 dist/sqlite3.o: $(DB_SRC) src/config.h
 	mkdir -p dist
-	$(MODCC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 dist/shell-sync.js: $(SHELL_JS)
 	cp $< $@
